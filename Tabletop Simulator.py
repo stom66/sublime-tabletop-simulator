@@ -10,6 +10,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer): pa
 class Global:
 	server = None
 	views = {}
+	ui_views = {}
 
 def open_script(script, window):
 	view = Global.views.get(script["guid"], None)
@@ -20,11 +21,27 @@ def open_script(script, window):
 		Global.views[script["guid"]] = view
 		view.set_syntax_file("Packages/Lua/Lua.sublime-syntax")
 	if script["guid"] != "-1":
-		view.set_name(script["name"] + " - " + script["guid"])
+		view.set_name("[Lua] [" + script["guid"] + "] " + script["name"])
 	else:
-		view.set_name(script["name"])
+		view.set_name("[Lua] " + script["name"])
 	view.run_command("append_to_buffer", {"text": script["script"]})
 	view.window().focus_view(view)
+
+	#new hackery
+	ui_view = Global.ui_views.get(script["guid"], None)
+	if ui_view is not None:
+		ui_view.run_command("erase_buffer")
+	else:
+		ui_view = window.new_file()
+		Global.ui_views[script["guid"]] = ui_view
+		ui_view.set_syntax_file("Packages/XML/XML.sublime-syntax")
+	if script["guid"] != "-1":
+		ui_view.set_name("[XML] [" + script["guid"] + "] " + script["name"])
+	else:
+		ui_view.set_name("[XML] " + script["name"])
+	ui_view.run_command("append_to_buffer", {"text": script["ui"]})
+	ui_view.window().focus_view(ui_view)
+	#end of new hackery
 
 class EditorAPIHandler(socketserver.StreamRequestHandler):
 	def handle(self):
@@ -108,7 +125,10 @@ class SendScriptsCommand(sublime_plugin.WindowCommand):
 				"guid": guid,
 				"script": Global.views[guid].substr(
 					sublime.Region(0, Global.views[guid].size())
-				)
+				),
+				"ui": Global.ui_views[guid].substr(
+					sublime.Region(0, Global.ui_views[guid].size())
+				),
 			})
 		send_data({"messageID": 1, "scriptStates": scripts})
 	def is_enabled(self): return len(Global.views) > 0
@@ -126,4 +146,8 @@ class CleanUpViews(sublime_plugin.EventListener):
 		for guid in Global.views.keys():
 			if view == Global.views[guid]:
 				del Global.views[guid]
+				return
+		for guid in Global.ui_views.keys():
+			if view == Global.ui_views[guid]:
+				del Global.ui_views[guid]
 				return
