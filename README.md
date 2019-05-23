@@ -23,6 +23,8 @@ Create the appropriate folder and put the contents of the repository in it.
  -  The server required to interact with Tabletop Simulator is not started
     by default. To start it, follow step 1 under Usage.
 
-    To start it by default, uncomment line 66 in Tabletop Simulator.py.
+    To start it by default, uncomment line 83 in Tabletop Simulator.py.
+    
+ -  The changes made by stom to allow editing XML scripts are not done in the best way possible (I'm quite happy to admit this) and could probably benefit from refactoring by someone with a proficiency in Python.
 
 [api]: http://berserk-games.com/knowledgebase/external-editor-api/
